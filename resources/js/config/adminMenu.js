@@ -11,19 +11,25 @@ export const adminMenuItems = [
     {
         title: 'Courses',
         icon: 'ki-book',
-        href: '/page',
+        href: '/courses',
         roles: ['instructor', 'admin', 'super_admin'],
+    },
+    {
+        title: 'Categories',
+        icon: 'ki-category',
+        href: '/categories',
+        roles: ['admin', 'super_admin'],
     },
     {
         title: 'Users',
         icon: 'ki-profile-circle',
-        href: '/page',
+        href: '/dashboard',
         roles: ['admin', 'super_admin'],
     },
     {
         title: 'Settings',
         icon: 'ki-setting-2',
-        href: '/page',
+        href: '/dashboard',
         roles: ['admin', 'super_admin'],
     },
 ];
