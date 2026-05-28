@@ -1,4 +1,5 @@
 <script setup>
+import HtmlContent from '@/components/Admin/HtmlContent.vue';
 import { useConfirmModal } from '@/composables/useConfirmModal';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
@@ -104,12 +105,7 @@ export default {
                     </h3>
                 </div>
                 <div class="kt-card-content p-5">
-                    <p v-if="course.summary" class="text-sm whitespace-pre-wrap">
-                        {{ course.summary }}
-                    </p>
-                    <p v-else class="text-sm text-secondary-foreground">
-                        No summary provided.
-                    </p>
+                    <HtmlContent :html="course.summary" empty-text="No summary provided." />
                     <p v-if="category" class="text-xs text-muted-foreground mt-4">
                         Category: {{ category.name }}
                     </p>

@@ -1,4 +1,5 @@
 <script setup>
+import { stripHtml } from '@/utils/stripHtml';
 import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
@@ -44,7 +45,7 @@ export default {
                             {{ course.title }}
                         </h2>
                         <p v-if="course.summary" class="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {{ course.summary }}
+                            {{ stripHtml(course.summary) }}
                         </p>
                         <p class="text-xs text-secondary-foreground mt-2">
                             <span v-if="course.instructor">{{ course.instructor.name }} · {{ course.instructor.email }}</span>
