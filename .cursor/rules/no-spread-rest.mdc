@@ -1,0 +1,40 @@
+---
+description: Do not use spread/rest (...); prefer explicit named alternatives
+globs: **/*.{php,js,vue,ts}
+alwaysApply: false
+---
+
+# No spread / rest syntax
+
+Do **not** use JavaScript or PHP **spread or rest** syntax (`...`). It is harder to scan in review and diffs. Use explicit, named alternatives.
+
+## JavaScript / Vue
+
+```javascript
+// Bad
+const merged = { ...defaults, ...overrides };
+fn(...args);
+
+// Good
+const merged = Object.assign({}, defaults, overrides);
+// or assign fields explicitly:
+const merged = { name: overrides.name ?? defaults.name, status: overrides.status ?? defaults.status };
+
+fn(arg1, arg2, arg3);
+```
+
+For arrays: `items.concat(extra)`, `Array.prototype.push.apply`, or explicit loops — not `[...a, ...b]`.
+
+## PHP
+
+```php
+// Bad
+$merged = [...$defaults, ...$overrides];
+foo(...$args);
+
+// Good
+$merged = array_merge($defaults, $overrides);
+foo($arg1, $arg2, $arg3);
+```
+
+Unpacking in array literals and argument lists is disallowed unless the user explicitly requests an exception for a specific line.

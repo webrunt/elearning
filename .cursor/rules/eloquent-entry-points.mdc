@@ -1,0 +1,32 @@
+---
+description: Prefer normal Eloquent model entry points; avoid bare Model::query()
+globs: app/**/*.php
+alwaysApply: false
+---
+
+# Eloquent query style
+
+Use **normal Eloquent entry points** on models. Start chains from the model, not from a generic query builder unless necessary.
+
+## Prefer
+
+```php
+User::where('active', true)->latest()->get();
+
+$user->posts()->where('published', true)->get();
+
+Course::findOrFail($id);
+```
+
+## Avoid unless justified
+
+```php
+User::query()->where('active', true)->get();
+```
+
+Use `Model::query()` only when you need an **explicit builder** for a complex chain that cannot start on the model (e.g. shared scope wiring, union/subquery builder passed between services). Add a brief comment explaining why.
+
+## Also avoid when a model API exists
+
+- `DB::table('users')` for domain data that has an Eloquent model — use the model instead
+- Raw query builder in controllers when a relationship or scope on the model is clearer

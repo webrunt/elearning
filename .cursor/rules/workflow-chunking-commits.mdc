@@ -1,0 +1,28 @@
+---
+description: Break large work into sub-tasks; suggest a commit message after each sub-task
+alwaysApply: true
+---
+
+# Workflow — chunking and commits
+
+## Chunk large work
+
+If a task is too big for one focused change set, split it into **sub-tasks** before coding. Each sub-task should:
+
+- Have a clear, testable outcome
+- Touch a bounded set of files
+- Be completable without leaving the repo in a broken state
+
+Do not start the next sub-task until the current one is finished and summarized for the user.
+
+## Commit message at end of each sub-task
+
+When a sub-task is **done** (not when the full feature is done), end your reply with a **ready-to-use commit message** in a fenced block, for example:
+
+```
+feat(auth): wire admin login POST and staff middleware
+```
+
+Use the repo’s existing commit style when known (e.g. `feat`, `fix`, `chore`). One sentence, imperative mood, scoped when helpful.
+
+Do **not** run `git commit` unless the user explicitly asks you to commit.

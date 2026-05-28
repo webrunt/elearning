@@ -1,0 +1,27 @@
+---
+description: Session flash only via FlashGrowl + useGrowl (KTToast); no inline flash banners
+globs: resources/js/**/*.{vue,js},app/Http/**/*.php
+alwaysApply: false
+---
+
+# Flash feedback — FlashGrowl only
+
+All **session flash** feedback (success, error, info, warning) is shown **globally** via:
+
+- `FlashGrowl` component (layout-level)
+- `useGrowl` composable (Metronic `KTToast`)
+
+## Do
+
+- Set flash in Laravel: `redirect()->with('success', '...')` or shared keys consumed by `HandleInertiaRequests`
+- Read flash in the layout / `FlashGrowl` and fire toasts with `useGrowl`
+- Use consistent flash keys the app already defines (do not invent per-page keys without reason)
+
+## Do not
+
+- Render inline flash banners, alert boxes, or `<div v-if="flash">` blocks inside individual pages
+- Duplicate toast logic in page components when the global handler can show it once
+
+## New pages
+
+When adding Inertia pages, assume flash is already handled at the layout level. Do not add page-local success/error markup for session messages.
