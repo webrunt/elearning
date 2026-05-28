@@ -94,12 +94,20 @@ export default {
                             />
                         </div>
                     </div>
-                    <Link
-                        :href="'/courses/' + enrollment.course.slug"
-                        class="kt-btn kt-btn-primary mt-auto"
-                    >
-                        View course
-                    </Link>
+                    <div class="flex flex-col gap-2 mt-auto">
+                        <Link
+                            :href="enrollment.continue_url"
+                            class="kt-btn kt-btn-primary"
+                        >
+                            Continue learning
+                        </Link>
+                        <Link
+                            :href="'/courses/' + enrollment.course.slug"
+                            class="kt-btn kt-btn-outline"
+                        >
+                            Course details
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

@@ -45,6 +45,7 @@ class MyLearningController extends Controller
                     'progress_percent' => $progressPercent,
                     'completed_lessons_count' => $completedLessons,
                     'total_lessons_count' => $totalLessons,
+                    'continue_url' => route('learn.continue', $course->slug),
                     'course' => [
                         'id' => $course->id,
                         'slug' => $course->slug,

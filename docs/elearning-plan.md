@@ -11,7 +11,7 @@
 - [x] **Phase 1b:** Course approval workflow — instructor submit → admin review summary → approve/reject
 - [x] **Phase 1c:** Admin UX — CKEditor for articles/summaries; clearer lesson creation flow on course edit
 - [x] **Phase 2:** Public catalog + course detail + free enrollment + my learning dashboard
-- [ ] **Phase 3:** Video upload/streaming, lesson player, progress tracking, summaries, mini quizzes
+- [x] **Phase 3:** Lesson player, protected video, progress API, random mini quizzes, completion
 - [ ] **Phase 4:** Reviews, moderation queue, user/role management, notifications
 - [ ] **Phase 5:** Stripe/checkout, orders, instructor payouts (when ready)
 

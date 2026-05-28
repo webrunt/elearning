@@ -14,6 +14,7 @@ class LessonProgress extends Model
         'lesson_id',
         'last_position_seconds',
         'watched_percent',
+        'content_completed_at',
         'completed_at',
     ];
 
@@ -23,6 +24,7 @@ class LessonProgress extends Model
     protected function casts(): array
     {
         return [
+            'content_completed_at' => 'datetime',
             'completed_at' => 'datetime',
         ];
     }

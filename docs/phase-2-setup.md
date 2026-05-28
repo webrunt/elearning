@@ -26,6 +26,6 @@ After `php artisan migrate:fresh --seed`:
 
 To publish your own course: admin → set status **Published** and leave price empty.
 
-## Phase 3 next
+## Phase 3
 
-Lesson player, video streaming, progress API, and quizzes at runtime.
+See [phase-3-setup.md](phase-3-setup.md) for the lesson player and quizzes.

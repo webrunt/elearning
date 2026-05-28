@@ -9,6 +9,7 @@ const props = defineProps({
     progress_percent: { type: Number, default: 0 },
     can_enroll: { type: Boolean, default: false },
     login_required: { type: Boolean, default: false },
+    continue_url: { type: String, default: null },
 });
 
 const page = usePage();
@@ -90,7 +91,7 @@ export default {
                             Curriculum
                         </h2>
                         <p class="text-xs text-muted-foreground mt-1">
-                            {{ totalLessons }} lessons · Lesson player arrives in Phase 3
+                            {{ totalLessons }} lessons
                         </p>
                     </div>
                     <div class="kt-card-content p-5 flex flex-col gap-4">
@@ -109,7 +110,14 @@ export default {
                                     class="flex items-center justify-between gap-3 text-sm p-2 rounded-lg bg-accent/40"
                                 >
                                     <span>{{ lesson.title }}</span>
-                                    <span class="text-xs text-muted-foreground shrink-0">
+                                    <Link
+                                        v-if="lesson.learn_url"
+                                        :href="lesson.learn_url"
+                                        class="kt-btn kt-btn-sm kt-btn-ghost shrink-0"
+                                    >
+                                        Open
+                                    </Link>
+                                    <span v-else class="text-xs text-muted-foreground shrink-0">
                                         {{ lessonTypeLabel(lesson.type) }}
                                         <span v-if="lesson.is_preview"> · Preview</span>
                                     </span>
@@ -154,8 +162,15 @@ export default {
                                     />
                                 </div>
                             </div>
-                            <Link href="/my-learning" class="kt-btn kt-btn-primary w-full">
-                                Go to My learning
+                            <Link
+                                v-if="continue_url"
+                                :href="continue_url"
+                                class="kt-btn kt-btn-primary w-full"
+                            >
+                                Continue learning
+                            </Link>
+                            <Link href="/my-learning" class="kt-btn kt-btn-outline w-full">
+                                My learning
                             </Link>
                         </div>
 

@@ -113,10 +113,16 @@ class CatalogController extends Controller
                         'title' => $lesson->title,
                         'type' => $lesson->type->value,
                         'is_preview' => $lesson->is_preview,
+                        'learn_url' => ($enrollment !== null || $lesson->is_preview)
+                            ? route('learn.show', ['slug' => $course->slug, 'lesson' => $lesson->id])
+                            : null,
                     ]),
                 ]),
             ]),
             'progress_percent' => $progressPercent,
+            'continue_url' => $enrollment !== null
+                ? route('learn.continue', $course->slug)
+                : null,
             'can_enroll' => $user !== null
                 && $user->isStudent()
                 && $enrollment === null
