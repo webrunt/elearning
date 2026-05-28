@@ -34,12 +34,42 @@ const videoRef = ref(null);
 let progressTimer = null;
 let lastSavedAt = 0;
 
-const showQuizPanel = computed(() => {
-    return props.quiz.required && props.lesson.has_quiz && contentComplete.value && !lessonComplete.value;
+const hasQuiz = computed(() => props.lesson.has_quiz);
+
+const canAccessQuiz = computed(() => {
+    return hasQuiz.value && contentComplete.value;
 });
 
 const canTakeQuiz = computed(() => {
-    return props.can_track_progress && showQuizPanel.value && !quizPassed.value;
+    return props.can_track_progress && canAccessQuiz.value;
+});
+
+const showQuizPrompt = computed(() => {
+    return hasQuiz.value && contentComplete.value && !quizPassed.value;
+});
+
+const progressHint = computed(() => {
+    if (!props.can_track_progress) {
+        return '';
+    }
+
+    if (!hasQuiz.value) {
+        return 'Progress saves automatically.';
+    }
+
+    if (props.quiz.required) {
+        return 'Progress saves automatically. Watch at least 90% to unlock the quiz and complete this lesson.';
+    }
+
+    return 'Progress saves automatically. Watch at least 90% to unlock the optional practice quiz.';
+});
+
+const quizPromptMessage = computed(() => {
+    if (props.quiz.required) {
+        return 'Content complete — pass the quiz to finish this lesson.';
+    }
+
+    return 'Content complete — try the optional quiz to check your understanding.';
 });
 
 const syncProgressState = (data) => {
@@ -92,8 +122,9 @@ const onVideoTimeUpdate = () => {
     }
 
     const now = Date.now();
+    const shouldSaveNow = percent >= 90 && (now - lastSavedAt >= 15000 || lastSavedAt === 0);
 
-    if (now - lastSavedAt < 15000) {
+    if (!shouldSaveNow && now - lastSavedAt < 15000) {
         return;
     }
 
@@ -110,8 +141,16 @@ const markArticleComplete = async () => {
     contentComplete.value = true;
 };
 
+const openQuizTab = () => {
+    activeTab.value = 'quiz';
+
+    if (canAccessQuiz.value && quizQuestions.value.length === 0) {
+        loadQuiz();
+    }
+};
+
 const loadQuiz = async () => {
-    if (!canTakeQuiz.value) {
+    if (!props.can_track_progress || !canAccessQuiz.value) {
         return;
     }
 
@@ -181,6 +220,14 @@ const goToNextLesson = () => {
 };
 
 onMounted(() => {
+    if (localProgress.value && props.lesson.type === 'video' && localProgress.value.watched_percent >= 90) {
+        contentComplete.value = true;
+    }
+
+    if (localProgress.value && localProgress.value.content_complete) {
+        contentComplete.value = true;
+    }
+
     if (videoRef.value && localProgress.value && localProgress.value.last_position_seconds > 0) {
         videoRef.value.currentTime = localProgress.value.last_position_seconds;
     }
@@ -280,14 +327,16 @@ export default {
                         Summary
                     </button>
                     <button
-                        v-if="quiz.required && lesson.has_quiz"
+                        v-if="hasQuiz"
                         type="button"
                         class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
                         :class="activeTab === 'quiz' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'"
-                        :disabled="!contentComplete && !quizPassed"
-                        @click="activeTab = 'quiz'"
+                        :disabled="!canAccessQuiz && !quizPassed"
+                        :title="!canAccessQuiz ? 'Complete the lesson content first' : ''"
+                        @click="openQuizTab"
                     >
                         Quiz
+                        <span v-if="!quiz.required" class="opacity-80 font-normal">(optional)</span>
                     </button>
                 </div>
 
@@ -332,22 +381,26 @@ export default {
                         </button>
                     </div>
 
-                    <div v-if="can_track_progress && lesson.type === 'video'" class="text-xs text-muted-foreground">
-                        Progress saves automatically. Watch at least 90% to unlock the quiz.
-                        <span v-if="localProgress"> ({{ localProgress.watched_percent }}% watched)</span>
+                    <div v-if="progressHint" class="text-xs text-muted-foreground">
+                        {{ progressHint }}
+                        <span v-if="localProgress && lesson.type === 'video'"> ({{ localProgress.watched_percent }}% watched)</span>
                     </div>
 
                     <div
-                        v-if="showQuizPanel && !quizPassed"
+                        v-if="showQuizPrompt"
                         class="rounded-xl border border-border p-4 flex flex-wrap items-center justify-between gap-3"
                     >
                         <p class="text-sm">
-                            Content complete — take the quiz to finish this lesson.
+                            {{ quizPromptMessage }}
                         </p>
                         <button class="kt-btn kt-btn-primary" type="button" :disabled="!canTakeQuiz" @click="loadQuiz">
-                            Start quiz
+                            {{ quiz.required ? 'Start quiz' : 'Try practice quiz' }}
                         </button>
                     </div>
+
+                    <p v-if="hasQuiz && !contentComplete && can_track_progress" class="text-xs text-muted-foreground">
+                        The quiz tab unlocks after you watch at least 90% of the video.
+                    </p>
                 </div>
 
                 <div v-show="activeTab === 'summary'" class="kt-card">
@@ -356,7 +409,7 @@ export default {
                     </div>
                 </div>
 
-                <div v-show="activeTab === 'quiz'" class="kt-card">
+                <div v-show="activeTab === 'quiz' && hasQuiz" class="kt-card">
                     <div class="kt-card-content p-5 lg:p-8 flex flex-col gap-6">
                         <div v-if="quizPassed && !quizResult" class="text-center py-6">
                             <p class="font-medium text-mono text-primary mb-2">
@@ -367,7 +420,14 @@ export default {
                             </p>
                         </div>
 
+                        <div v-else-if="!canAccessQuiz" class="text-center py-6 text-sm text-secondary-foreground">
+                            Complete the lesson content first (watch at least 90% of the video).
+                        </div>
+
                         <div v-else-if="quizQuestions.length === 0 && !quizLoading" class="text-center py-6">
+                            <p v-if="!quiz.required" class="text-sm text-muted-foreground mb-4">
+                                This quiz is optional and does not block lesson completion.
+                            </p>
                             <button class="kt-btn kt-btn-primary" type="button" :disabled="!canTakeQuiz" @click="loadQuiz">
                                 Load quiz questions
                             </button>
