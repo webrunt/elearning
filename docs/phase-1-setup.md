@@ -32,6 +32,10 @@ Uploads:
 - Thumbnails → `storage/app/public/courses/thumbnails`
 - Videos → `storage/app/public/courses/{course_id}/videos`
 
+## Phase 1c (UX)
+
+See [phase-1c-setup.md](phase-1c-setup.md) for CKEditor rich text and the lesson creation flow.
+
 ## Demo
 
 Log in as `instructor@elearning.local` / `password` on the admin portal.

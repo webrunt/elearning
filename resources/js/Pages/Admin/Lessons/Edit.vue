@@ -1,4 +1,5 @@
 <script setup>
+import RichTextEditor from '@/components/Admin/RichTextEditor.vue';
 import { useConfirmModal } from '@/composables/useConfirmModal';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -217,24 +218,22 @@ export default {
                     </div>
                 </div>
                 <div class="kt-card-content p-5 lg:p-8 flex flex-col gap-4">
-                    <div class="flex flex-col gap-1">
-                        <label class="kt-form-label">Summary</label>
-                        <textarea
-                            v-model="form.summary"
-                            class="kt-input"
-                            rows="3"
-                            placeholder="Short description shown in the course outline"
-                        />
-                    </div>
-                    <div v-if="form.type === 'article'" class="flex flex-col gap-1">
-                        <label class="kt-form-label">Article body</label>
-                        <textarea
-                            v-model="form.content"
-                            class="kt-input"
-                            rows="8"
-                            placeholder="Main lesson text students will read"
-                        />
-                    </div>
+                    <RichTextEditor
+                        v-model="form.summary"
+                        variant="minimal"
+                        label="Summary"
+                        hint="Short description shown in the course outline. Plain formatting only."
+                        placeholder="What will students learn in this lesson?"
+                    />
+                    <RichTextEditor
+                        v-if="form.type === 'article'"
+                        v-model="form.content"
+                        variant="full"
+                        label="Article body"
+                        hint="Main lesson content students read after opening the lesson."
+                        placeholder="Write your lesson here…"
+                        required
+                    />
                     <div v-if="form.type === 'video'" class="flex flex-col gap-2">
                         <label class="kt-form-label">Video file</label>
                         <p class="text-xs text-muted-foreground -mt-1">

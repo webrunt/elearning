@@ -1,0 +1,36 @@
+---
+description: Use RichTextEditor (CKEditor 5) for long-form admin content, not plain textareas
+globs: resources/js/Pages/Admin/**/*.{vue,js}
+alwaysApply: false
+---
+
+# Rich text — CKEditor via RichTextEditor
+
+Article bodies, course summaries, and lesson summaries in admin forms use **`RichTextEditor`**, not `<textarea>`.
+
+## Component
+
+- [`resources/js/components/Admin/RichTextEditor.vue`](resources/js/components/Admin/RichTextEditor.vue)
+- Config: [`resources/js/config/ckeditorConfigs.js`](resources/js/config/ckeditorConfigs.js)
+
+## Variants
+
+| `variant` | Use for |
+|-----------|---------|
+| `full` | Lesson article `content` |
+| `minimal` | Course / lesson `summary` |
+
+## Example
+
+```vue
+import RichTextEditor from '@/components/Admin/RichTextEditor.vue';
+
+<RichTextEditor
+    v-model="form.content"
+    variant="full"
+    label="Article body"
+    hint="Shown to enrolled students."
+/>
+```
+
+HTML is stored as-is in the database. Sanitize on public display in Phase 2+ if needed.

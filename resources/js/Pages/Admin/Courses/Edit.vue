@@ -1,7 +1,8 @@
 <script setup>
+import RichTextEditor from '@/components/Admin/RichTextEditor.vue';
 import { useConfirmModal } from '@/composables/useConfirmModal';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const confirmModal = useConfirmModal();
 
@@ -28,7 +29,63 @@ const form = useForm({
 const sectionTitle = ref('');
 const newLessonTitle = ref('');
 const newLessonType = ref('video');
-const activeSectionId = ref(null);
+const lessonFormSectionId = ref(null);
+const lessonFormProcessing = ref(false);
+
+const lessonTypeOptions = [
+    {
+        value: 'video',
+        label: 'Video lesson',
+        description: 'You will upload the video file on the lesson editor screen.',
+    },
+    {
+        value: 'article',
+        label: 'Article lesson',
+        description: 'You will write the lesson with the rich text editor.',
+    },
+];
+
+const selectedLessonTypeHelp = computed(() => {
+    for (let i = 0; i < lessonTypeOptions.length; i++) {
+        if (lessonTypeOptions[i].value === newLessonType.value) {
+            return lessonTypeOptions[i].description;
+        }
+    }
+
+    return '';
+});
+
+const totalLessons = computed(() => {
+    let count = 0;
+
+    for (let i = 0; i < props.course.sections.length; i++) {
+        count += props.course.sections[i].lessons.length;
+    }
+
+    return count;
+});
+
+const lessonTypeLabel = (type) => {
+    if (type === 'video') {
+        return 'Video';
+    }
+
+    if (type === 'article') {
+        return 'Article';
+    }
+
+    return type;
+};
+
+const openLessonForm = (sectionId) => {
+    lessonFormSectionId.value = sectionId;
+    newLessonTitle.value = '';
+    newLessonType.value = 'video';
+};
+
+const closeLessonForm = () => {
+    lessonFormSectionId.value = null;
+};
 
 const onThumbnail = (event) => {
     const file = event.target.files[0];
@@ -61,13 +118,18 @@ const addLesson = (sectionId) => {
         return;
     }
 
+    lessonFormProcessing.value = true;
+
     router.post('/sections/' + sectionId + '/lessons', {
         title: newLessonTitle.value,
         type: newLessonType.value,
     }, {
         onSuccess: () => {
             newLessonTitle.value = '';
-            activeSectionId.value = null;
+            closeLessonForm();
+        },
+        onFinish: () => {
+            lessonFormProcessing.value = false;
         },
     });
 };
@@ -209,10 +271,13 @@ export default {
                             <label class="kt-form-label">Title</label>
                             <input v-model="form.title" class="kt-input" type="text" required />
                         </div>
-                        <div class="flex flex-col gap-1">
-                            <label class="kt-form-label">Summary</label>
-                            <textarea v-model="form.summary" class="kt-input" rows="4" />
-                        </div>
+                        <RichTextEditor
+                            v-model="form.summary"
+                            variant="minimal"
+                            label="Summary"
+                            hint="Shown on the course page and in admin review."
+                            placeholder="What students will learn in this course"
+                        />
                         <div class="flex flex-col gap-1">
                             <label class="kt-form-label">Category</label>
                             <select v-model="form.category_id" class="kt-select">
@@ -265,12 +330,27 @@ export default {
 
             <div class="xl:col-span-3">
                 <div class="kt-card">
-                    <div class="kt-card-header px-5 py-4 flex items-center justify-between">
+                    <div class="kt-card-header px-5 py-4 border-b border-border">
                         <h3 class="kt-card-title text-sm font-semibold">
                             Curriculum
                         </h3>
+                        <p class="text-xs text-muted-foreground mt-1">
+                            {{ course.sections.length }} section<span v-if="course.sections.length !== 1">s</span>
+                            · {{ totalLessons }} lesson<span v-if="totalLessons !== 1">s</span>
+                        </p>
                     </div>
                     <div class="kt-card-content p-5 flex flex-col gap-6">
+                        <div class="rounded-xl border border-border bg-accent/30 p-4">
+                            <p class="text-sm font-medium text-mono mb-2">
+                                How to build your course
+                            </p>
+                            <ol class="text-sm text-secondary-foreground flex flex-col gap-1.5 list-decimal list-inside">
+                                <li>Add a <strong class="text-mono font-medium">section</strong> (a chapter or module).</li>
+                                <li>Add <strong class="text-mono font-medium">lessons</strong> inside each section.</li>
+                                <li>Open each lesson to add video, article text, and optional quiz.</li>
+                            </ol>
+                        </div>
+
                         <form class="flex gap-2" @submit.prevent="addSection">
                             <input
                                 v-model="sectionTitle"
@@ -308,15 +388,15 @@ export default {
                                             {{ lesson.title }}
                                         </p>
                                         <p class="text-xs text-muted-foreground">
-                                            {{ lesson.type }}
-                                            <span v-if="lesson.is_preview"> · Preview</span>
+                                            {{ lessonTypeLabel(lesson.type) }}
+                                            <span v-if="lesson.is_preview"> · Free preview</span>
                                         </p>
                                     </div>
                                     <Link
                                         :href="'/lessons/' + lesson.id + '/edit'"
-                                        class="kt-btn kt-btn-sm kt-btn-outline"
+                                        class="kt-btn kt-btn-sm kt-btn-primary"
                                     >
-                                        Edit
+                                        Edit content
                                     </Link>
                                 </li>
                                 <li v-if="section.lessons.length === 0" class="text-sm text-secondary-foreground">
@@ -324,32 +404,75 @@ export default {
                                 </li>
                             </ul>
 
-                            <div v-if="activeSectionId === section.id" class="flex flex-col sm:flex-row gap-2">
-                                <input
-                                    v-model="newLessonTitle"
-                                    class="kt-input grow"
-                                    type="text"
-                                    placeholder="Lesson title"
-                                />
-                                <select v-model="newLessonType" class="kt-select w-32">
-                                    <option value="video">Video</option>
-                                    <option value="article">Article</option>
-                                </select>
-                                <button class="kt-btn kt-btn-sm kt-btn-primary" type="button" @click="addLesson(section.id)">
-                                    Add
-                                </button>
-                                <button class="kt-btn kt-btn-sm kt-btn-ghost" type="button" @click="activeSectionId = null">
-                                    Cancel
-                                </button>
+                            <div
+                                v-if="lessonFormSectionId === section.id"
+                                class="rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col gap-4"
+                            >
+                                <div>
+                                    <p class="text-sm font-semibold text-mono">
+                                        New lesson in “{{ section.title }}”
+                                    </p>
+                                    <p class="text-xs text-muted-foreground mt-1">
+                                        Step 1 of 2 — name and type. Next you’ll add content on the lesson editor.
+                                    </p>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="kt-form-label">Lesson title</label>
+                                    <input
+                                        v-model="newLessonTitle"
+                                        class="kt-input"
+                                        type="text"
+                                        placeholder="e.g. Introduction to variables"
+                                        @keydown.enter.prevent="addLesson(section.id)"
+                                    />
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <label class="kt-form-label">Lesson type</label>
+                                    <div class="grid sm:grid-cols-2 gap-2">
+                                        <button
+                                            v-for="option in lessonTypeOptions"
+                                            :key="option.value"
+                                            type="button"
+                                            class="rounded-lg border p-3 text-left text-sm transition-colors"
+                                            :class="newLessonType === option.value
+                                                ? 'border-primary bg-background ring-1 ring-primary/20'
+                                                : 'border-border hover:bg-accent/40'"
+                                            @click="newLessonType = option.value"
+                                        >
+                                            <span class="font-medium text-mono block">{{ option.label }}</span>
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground">
+                                        {{ selectedLessonTypeHelp }}
+                                    </p>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        class="kt-btn kt-btn-primary"
+                                        type="button"
+                                        :disabled="lessonFormProcessing || newLessonTitle.trim() === ''"
+                                        @click="addLesson(section.id)"
+                                    >
+                                        Create lesson & edit content
+                                    </button>
+                                    <button
+                                        class="kt-btn kt-btn-ghost"
+                                        type="button"
+                                        :disabled="lessonFormProcessing"
+                                        @click="closeLessonForm"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
                             </div>
                             <button
                                 v-else
-                                class="kt-btn kt-btn-sm kt-btn-outline"
+                                class="kt-btn kt-btn-sm kt-btn-outline w-full sm:w-auto"
                                 type="button"
-                                @click="activeSectionId = section.id; newLessonTitle = ''"
+                                @click="openLessonForm(section.id)"
                             >
                                 <i class="ki-filled ki-plus" />
-                                Add lesson
+                                Add lesson to this section
                             </button>
                         </div>
 

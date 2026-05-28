@@ -1,4 +1,5 @@
 <script setup>
+import RichTextEditor from '@/components/Admin/RichTextEditor.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -48,6 +49,9 @@ export default {
             <h1 class="text-xl font-semibold text-mono">
                 New course
             </h1>
+            <p class="text-sm text-secondary-foreground mt-1">
+                After creating the course you’ll add sections and lessons on the next screen.
+            </p>
         </div>
 
         <form class="kt-card" @submit.prevent="submit">
@@ -57,10 +61,13 @@ export default {
                     <input v-model="form.title" class="kt-input" type="text" required />
                     <p v-if="form.errors.title" class="text-sm text-destructive">{{ form.errors.title }}</p>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <label class="kt-form-label">Summary</label>
-                    <textarea v-model="form.summary" class="kt-input" rows="4" />
-                </div>
+                <RichTextEditor
+                    v-model="form.summary"
+                    variant="minimal"
+                    label="Summary"
+                    hint="Brief overview for students browsing the catalog."
+                    placeholder="What will students learn?"
+                />
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-1">
                         <label class="kt-form-label">Category</label>
