@@ -70,9 +70,8 @@ const setCorrectOption = (questionIndex, optionIndex) => {
 };
 
 const submit = () => {
-    form.post('/lessons/' + props.lesson.id, {
+    form.put('/lessons/' + props.lesson.id, {
         forceFormData: true,
-        _method: 'put',
     });
 };
 </script>

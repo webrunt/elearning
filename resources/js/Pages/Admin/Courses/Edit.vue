@@ -36,9 +36,8 @@ const onThumbnail = (event) => {
 };
 
 const saveCourse = () => {
-    form.post('/courses/' + props.course.id, {
+    form.put('/courses/' + props.course.id, {
         forceFormData: true,
-        _method: 'put',
     });
 };
 
