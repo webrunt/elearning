@@ -1,6 +1,11 @@
 <script setup>
+import CourseCard from '@/components/Student/CourseCard.vue';
 import { Link } from '@inertiajs/vue3';
 import PublicLayout from '@/Pages/Layouts/PublicLayout.vue';
+
+defineProps({
+    featured_courses: { type: Array, default: () => [] },
+});
 </script>
 
 <script>
@@ -21,12 +26,12 @@ export default {
                     Master new skills with courses built for real progress
                 </h1>
                 <p class="text-lg text-secondary-foreground mb-8 max-w-2xl">
-                    A Udemy-style learning experience: watch lessons, read summaries, check your understanding with quick quizzes, and pick up where you left off.
+                    Browse the catalog, enroll for free, and track your progress as you learn.
                 </p>
                 <div class="flex flex-wrap gap-3">
-                    <a class="kt-btn kt-btn-primary" href="#courses">
+                    <Link class="kt-btn kt-btn-primary" href="/courses">
                         Explore courses
-                    </a>
+                    </Link>
                     <Link class="kt-btn kt-btn-outline" href="/register">
                         Create free account
                     </Link>
@@ -41,7 +46,7 @@ export default {
                 Everything you need to learn
             </h2>
             <p class="text-secondary-foreground">
-                Built for students first — catalog and checkout arrive in the next phase.
+                Structured courses, video lessons, and quick quizzes — with more coming in the next phase.
             </p>
         </div>
         <div class="grid md:grid-cols-3 gap-6 lg:gap-8">
@@ -92,38 +97,27 @@ export default {
             <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
                 <div>
                     <h2 class="text-2xl lg:text-3xl font-semibold text-mono mb-2">
-                        Popular courses
+                        Published courses
                     </h2>
                     <p class="text-secondary-foreground">
-                        Course catalog publishing is coming in Phase 2. Sign up now to be ready.
+                        Enroll for free and start learning today.
                     </p>
                 </div>
-                <Link class="kt-btn kt-btn-primary shrink-0" href="/register">
-                    Get started free
+                <Link class="kt-btn kt-btn-primary shrink-0" href="/courses">
+                    View all courses
                 </Link>
             </div>
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div v-for="n in 3" :key="n" class="kt-card">
-                    <div class="kt-card-content p-0">
-                        <div class="h-40 rounded-t-xl bg-muted/50 flex items-center justify-center">
-                            <i class="ki-filled ki-picture text-3xl text-muted-foreground" />
-                        </div>
-                        <div class="p-5">
-                            <span class="kt-badge kt-badge-xs kt-badge-light mb-2">
-                                Coming soon
-                            </span>
-                            <h3 class="font-semibold text-mono mb-1">
-                                Course placeholder {{ n }}
-                            </h3>
-                            <p class="text-sm text-secondary-foreground mb-3">
-                                Instructor-led · Multiple lessons
-                            </p>
-                            <span class="text-sm font-medium text-primary">
-                                Free enrollment
-                            </span>
-                        </div>
-                    </div>
+            <div v-if="featured_courses.length === 0" class="kt-card">
+                <div class="kt-card-content p-10 text-center text-secondary-foreground">
+                    No published courses yet. Check back soon.
                 </div>
+            </div>
+            <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <CourseCard
+                    v-for="course in featured_courses"
+                    :key="course.slug"
+                    :course="course"
+                />
             </div>
         </div>
     </section>

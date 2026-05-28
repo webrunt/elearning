@@ -4,9 +4,15 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Student\Auth\LoginController as StudentLoginController;
 use App\Http\Controllers\Student\Auth\LogoutController as StudentLogoutController;
 use App\Http\Controllers\Student\Auth\RegisterController as StudentRegisterController;
+use App\Http\Controllers\Student\CatalogController;
+use App\Http\Controllers\Student\EnrollmentController;
+use App\Http\Controllers\Student\MyLearningController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::get('/courses', [CatalogController::class, 'index'])->name('catalog.index');
+Route::get('/courses/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
 
 Route::middleware('guest.student')->group(function () {
     Route::get('/login', [StudentLoginController::class, 'create'])->name('student.login');
@@ -17,4 +23,6 @@ Route::middleware('guest.student')->group(function () {
 
 Route::middleware(['auth', 'student'])->group(function () {
     Route::post('/logout', StudentLogoutController::class)->name('student.logout');
+    Route::get('/my-learning', [MyLearningController::class, 'index'])->name('my-learning.index');
+    Route::post('/courses/{slug}/enroll', [EnrollmentController::class, 'store'])->name('enrollments.store');
 });

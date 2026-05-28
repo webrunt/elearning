@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class,
             DemoUserSeeder::class,
             CategorySeeder::class,
+            PublishedDemoCourseSeeder::class,
         ]);
     }
 }

@@ -40,7 +40,7 @@ class LoginController extends Controller
             ])->onlyInput('email');
         }
 
-        return redirect()->intended(route('home'))
+        return redirect()->intended(route('my-learning.index'))
             ->with('success', 'Welcome back, '.$user->name.'.');
     }
 }

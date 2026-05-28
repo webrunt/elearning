@@ -16,7 +16,7 @@ class RedirectIfAuthenticatedStudent
         $user = $request->user();
 
         if ($user !== null && $user->isStudent()) {
-            return redirect()->route('home');
+            return redirect()->route('my-learning.index');
         }
 
         return $next($request);

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CourseStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -67,6 +68,32 @@ class Course extends Model
     public function lessons(): HasManyThrough
     {
         return $this->hasManyThrough(Lesson::class, Section::class);
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /**
+     * @param  Builder<Course>  $query
+     * @return Builder<Course>
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('status', CourseStatus::Published);
+    }
+
+    public static function findPublishedBySlug(string $slug): Course
+    {
+        return static::published()
+            ->where('slug', $slug)
+            ->firstOrFail();
+    }
+
+    public function isFree(): bool
+    {
+        return $this->price === null || (float) $this->price <= 0;
     }
 
     public function isOwnedBy(User $user): bool

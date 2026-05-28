@@ -34,7 +34,7 @@ class RegisterController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('home')
-            ->with('success', 'Your account has been created.');
+        return redirect()->route('catalog.index')
+            ->with('success', 'Your account has been created. Browse courses and enroll for free.');
     }
 }

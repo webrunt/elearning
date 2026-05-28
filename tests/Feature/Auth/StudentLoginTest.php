@@ -24,7 +24,7 @@ class StudentLoginTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertRedirect(route('home'));
+        $response->assertRedirect(route('my-learning.index'));
         $this->assertAuthenticatedAs(User::where('email', 'student@elearning.local')->first());
     }
 

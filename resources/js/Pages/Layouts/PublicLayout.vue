@@ -37,16 +37,26 @@ onMounted(() => {
                     <img class="h-[22px] hidden dark:block" src="@assets/media/app/default-logo-dark.svg" alt="" />
                 </Link>
                 <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
-                    <a class="text-secondary-foreground hover:text-primary" href="#courses">
+                    <Link class="text-secondary-foreground hover:text-primary" href="/courses">
                         Courses
-                    </a>
-                    <a class="text-secondary-foreground hover:text-primary" href="#features">
+                    </Link>
+                    <Link
+                        v-if="user"
+                        class="text-secondary-foreground hover:text-primary"
+                        href="/my-learning"
+                    >
+                        My learning
+                    </Link>
+                    <a class="text-secondary-foreground hover:text-primary" href="/#features">
                         Features
                     </a>
                 </nav>
                 <div class="flex items-center gap-2.5">
                     <template v-if="user">
-                        <span class="text-sm text-secondary-foreground hidden sm:inline">
+                        <Link href="/my-learning" class="kt-btn kt-btn-sm kt-btn-ghost hidden sm:inline-flex">
+                            My learning
+                        </Link>
+                        <span class="text-sm text-secondary-foreground hidden lg:inline">
                             Hi, {{ user.name }}
                         </span>
                         <Link href="/logout" method="post" as="button" type="button" class="kt-btn kt-btn-sm kt-btn-outline">

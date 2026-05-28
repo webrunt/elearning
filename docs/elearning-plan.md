@@ -10,7 +10,7 @@
 - [x] **Phase 1:** Categories, courses, sections, lessons — admin/instructor CRUD with policies
 - [x] **Phase 1b:** Course approval workflow — instructor submit → admin review summary → approve/reject
 - [x] **Phase 1c:** Admin UX — CKEditor for articles/summaries; clearer lesson creation flow on course edit
-- [ ] **Phase 2:** Public catalog + course detail (store-client templates) + free enrollment + my learning
+- [x] **Phase 2:** Public catalog + course detail + free enrollment + my learning dashboard
 - [ ] **Phase 3:** Video upload/streaming, lesson player, progress tracking, summaries, mini quizzes
 - [ ] **Phase 4:** Reviews, moderation queue, user/role management, notifications
 - [ ] **Phase 5:** Stripe/checkout, orders, instructor payouts (when ready)
