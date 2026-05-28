@@ -1,0 +1,52 @@
+---
+description: Destructive or branching confirmations via ConfirmModal + useConfirmModal; never window.confirm
+globs: resources/js/**/*.{vue,js}
+alwaysApply: false
+---
+
+# Confirmations — ConfirmModal only
+
+User confirmations (delete, irreversible actions, “are you sure?”) use the **global Metronic modal**, not `window.confirm` or `alert`.
+
+## Stack
+
+- `ConfirmModal` in [`resources/js/components/ConfirmModal.vue`](resources/js/components/ConfirmModal.vue) — mounted in [`AdminDashboardLayout.vue`](resources/js/Pages/Layouts/AdminDashboardLayout.vue)
+- `useConfirmModal()` in [`resources/js/composables/useConfirmModal.js`](resources/js/composables/useConfirmModal.js)
+
+## Do
+
+```javascript
+import { useConfirmModal } from '@/composables/useConfirmModal';
+
+const confirmModal = useConfirmModal();
+
+const onDelete = async (item) => {
+    const confirmed = await confirmModal.confirm({
+        title: 'Delete category',
+        message: 'Delete "' + item.name + '"? This cannot be undone.',
+        confirmLabel: 'Delete',
+        cancelLabel: 'Cancel',
+        variant: 'danger',
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.delete('/categories/' + item.id, { preserveScroll: true });
+};
+```
+
+- Use `variant: 'danger'` for destructive actions; `variant: 'primary'` (default) for neutral confirms
+- Keep `confirmModal.confirm()` **async** and return early when the user cancels
+- Add `ConfirmModal` to any **new staff layout** that needs confirmations (same pattern as `FlashGrowl`)
+
+## Do not
+
+- `window.confirm()`, `window.alert()`, or browser `prompt()`
+- Inline one-off modal markup duplicated per page — reuse `useConfirmModal`
+- Custom confirm toasts for yes/no decisions (toasts are for feedback after an action; see flash-growl rule)
+
+## New destructive actions
+
+When adding delete/remove/cancel-with-loss flows in admin Vue pages, wire them through `useConfirmModal` with a clear title, specific message, and labeled buttons.

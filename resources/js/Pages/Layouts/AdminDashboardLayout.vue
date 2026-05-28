@@ -1,5 +1,6 @@
 <script setup>
 import AdminSidebarMenu from '@/components/Admin/AdminSidebarMenu.vue';
+import ConfirmModal from '@/components/ConfirmModal.vue';
 import FlashGrowl from '@/components/FlashGrowl.vue';
 import AdminHeader from '@/components/Admin/HeaderDashboard.vue';
 import AdminFooter from '@/components/Admin/Footer.vue';
@@ -31,6 +32,7 @@ onMounted(() => {
 </script>
 <template>
     <FlashGrowl />
+    <ConfirmModal />
     <AdminSidebarMenu />
     <div class="kt-wrapper flex grow flex-col">
         <AdminHeader />

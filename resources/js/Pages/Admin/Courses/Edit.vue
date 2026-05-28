@@ -1,6 +1,9 @@
 <script setup>
+import { useConfirmModal } from '@/composables/useConfirmModal';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+
+const confirmModal = useConfirmModal();
 
 const props = defineProps({
     course: { type: Object, required: true },
@@ -67,8 +70,16 @@ const addLesson = (sectionId) => {
     });
 };
 
-const deleteSection = (section) => {
-    if (!window.confirm('Delete section "' + section.title + '" and all its lessons?')) {
+const deleteSection = async (section) => {
+    const confirmed = await confirmModal.confirm({
+        title: 'Delete section',
+        message: 'Delete "' + section.title + '" and all lessons inside it? This cannot be undone.',
+        confirmLabel: 'Delete section',
+        cancelLabel: 'Cancel',
+        variant: 'danger',
+    });
+
+    if (!confirmed) {
         return;
     }
 
@@ -77,8 +88,16 @@ const deleteSection = (section) => {
     });
 };
 
-const deleteCourse = () => {
-    if (!window.confirm('Delete this course permanently?')) {
+const deleteCourse = async () => {
+    const confirmed = await confirmModal.confirm({
+        title: 'Delete course',
+        message: 'Delete "' + props.course.title + '" permanently? All sections, lessons, and uploads will be removed.',
+        confirmLabel: 'Delete course',
+        cancelLabel: 'Cancel',
+        variant: 'danger',
+    });
+
+    if (!confirmed) {
         return;
     }
 

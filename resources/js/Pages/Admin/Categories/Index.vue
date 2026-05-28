@@ -1,6 +1,9 @@
 <script setup>
-import { Head, useForm } from '@inertiajs/vue3';
+import { useConfirmModal } from '@/composables/useConfirmModal';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+
+const confirmModal = useConfirmModal();
 
 const props = defineProps({
     categories: {
@@ -48,12 +51,20 @@ const submitEdit = () => {
     });
 };
 
-const deleteCategory = (category) => {
-    if (!window.confirm('Delete category "' + category.name + '"?')) {
+const deleteCategory = async (category) => {
+    const confirmed = await confirmModal.confirm({
+        title: 'Delete category',
+        message: 'Delete "' + category.name + '"? You cannot delete categories that still have courses.',
+        confirmLabel: 'Delete',
+        cancelLabel: 'Cancel',
+        variant: 'danger',
+    });
+
+    if (!confirmed) {
         return;
     }
 
-    useForm({}).delete('/categories/' + category.id, {
+    router.delete('/categories/' + category.id, {
         preserveScroll: true,
     });
 };
