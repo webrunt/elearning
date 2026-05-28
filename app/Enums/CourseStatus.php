@@ -21,4 +21,18 @@ enum CourseStatus: string
             self::Archived->value => 'Archived',
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function labelsForStaff(bool $isAdmin): array
+    {
+        if ($isAdmin) {
+            return self::labels();
+        }
+
+        return [
+            self::Draft->value => 'Draft',
+        ];
+    }
 }

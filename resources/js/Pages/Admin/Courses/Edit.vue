@@ -11,13 +11,16 @@ const props = defineProps({
     statuses: { type: Object, required: true },
     instructors: { type: Array, required: true },
     can_pick_instructor: { type: Boolean, default: false },
+    is_admin: { type: Boolean, default: false },
+    can_submit_for_review: { type: Boolean, default: false },
+    can_review: { type: Boolean, default: false },
 });
 
 const form = useForm({
     title: props.course.title,
     summary: props.course.summary || '',
     category_id: props.course.category_id || '',
-    status: props.course.status,
+    status: props.is_admin ? props.course.status : undefined,
     instructor_id: props.course.instructor_id || '',
     thumbnail: null,
 });
@@ -88,6 +91,24 @@ const deleteSection = async (section) => {
     });
 };
 
+const submitForReview = async () => {
+    const confirmed = await confirmModal.confirm({
+        title: 'Submit for review',
+        message: 'Send "' + props.course.title + '" to admins for approval? You will not be able to publish it yourself.',
+        confirmLabel: 'Submit',
+        cancelLabel: 'Cancel',
+        variant: 'primary',
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.post('/courses/' + props.course.id + '/submit-review', {}, {
+        preserveScroll: true,
+    });
+};
+
 const deleteCourse = async () => {
     const confirmed = await confirmModal.confirm({
         title: 'Delete course',
@@ -133,6 +154,46 @@ export default {
             </button>
         </div>
 
+        <div
+            v-if="course.rejection_feedback"
+            class="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
+        >
+            <p class="text-sm font-semibold text-destructive mb-1">
+                Changes requested
+            </p>
+            <p class="text-sm whitespace-pre-wrap">
+                {{ course.rejection_feedback }}
+            </p>
+        </div>
+
+        <div
+            v-if="course.status === 'pending_review'"
+            class="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-wrap items-center justify-between gap-3"
+        >
+            <p class="text-sm">
+                This course is awaiting admin review.
+            </p>
+            <Link
+                v-if="can_review"
+                :href="'/courses/' + course.id + '/review'"
+                class="kt-btn kt-btn-sm kt-btn-primary"
+            >
+                Open review
+            </Link>
+        </div>
+
+        <div
+            v-if="course.review_summary && course.status === 'published'"
+            class="mb-6 rounded-xl border border-border bg-accent/30 p-4"
+        >
+            <p class="text-sm font-semibold text-mono mb-1">
+                Admin review summary
+            </p>
+            <p class="text-sm whitespace-pre-wrap">
+                {{ course.review_summary }}
+            </p>
+        </div>
+
         <div class="grid xl:grid-cols-5 gap-6">
             <div class="xl:col-span-2">
                 <form class="kt-card" @submit.prevent="saveCourse">
@@ -162,13 +223,19 @@ export default {
                                 </option>
                             </select>
                         </div>
-                        <div class="flex flex-col gap-1">
+                        <div v-if="is_admin" class="flex flex-col gap-1">
                             <label class="kt-form-label">Status</label>
                             <select v-model="form.status" class="kt-select">
                                 <option v-for="(label, value) in statuses" :key="value" :value="value">
                                     {{ label }}
                                 </option>
                             </select>
+                        </div>
+                        <div v-else class="flex flex-col gap-1">
+                            <label class="kt-form-label">Status</label>
+                            <p class="text-sm font-medium text-mono py-2">
+                                {{ course.status_label }}
+                            </p>
                         </div>
                         <div v-if="can_pick_instructor" class="flex flex-col gap-1">
                             <label class="kt-form-label">Instructor</label>
@@ -184,6 +251,14 @@ export default {
                         </div>
                         <button class="kt-btn kt-btn-primary" type="submit" :disabled="form.processing">
                             Save details
+                        </button>
+                        <button
+                            v-if="can_submit_for_review"
+                            class="kt-btn kt-btn-outline"
+                            type="button"
+                            @click="submitForReview"
+                        >
+                            Submit for review
                         </button>
                     </div>
                 </form>

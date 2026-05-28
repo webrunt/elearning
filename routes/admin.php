@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Auth\LoginController as StaffLoginController;
 use App\Http\Controllers\Admin\Auth\LogoutController as StaffLogoutController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CourseController;
+use App\Http\Controllers\Admin\CourseReviewController;
 use App\Http\Controllers\Admin\LessonController;
 use App\Http\Controllers\Admin\SectionController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,12 @@ Route::middleware(['auth', 'staff'])->name('admin.')->group(function () {
     Route::redirect('/', '/dashboard');
 
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('courses/pending', [CourseReviewController::class, 'pending'])->name('courses.review.pending');
+    Route::get('courses/{course}/review', [CourseReviewController::class, 'show'])->name('courses.review.show');
+    Route::post('courses/{course}/submit-review', [CourseReviewController::class, 'submit'])->name('courses.review.submit');
+    Route::post('courses/{course}/approve', [CourseReviewController::class, 'approve'])->name('courses.review.approve');
+    Route::post('courses/{course}/reject', [CourseReviewController::class, 'reject'])->name('courses.review.reject');
+
     Route::resource('courses', CourseController::class)->except(['show']);
 
     Route::post('courses/{course}/sections', [SectionController::class, 'store'])->name('courses.sections.store');

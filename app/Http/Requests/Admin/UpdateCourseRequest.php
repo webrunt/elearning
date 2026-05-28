@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\CourseStatus;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,13 +29,18 @@ class UpdateCourseRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'title' => ['required', 'string', 'max:255'],
             'summary' => ['nullable', 'string'],
             'category_id' => ['nullable', 'exists:categories,id'],
-            'status' => ['required', Rule::enum(CourseStatus::class)],
             'instructor_id' => ['nullable', 'exists:users,id'],
             'thumbnail' => ['nullable', 'image', 'max:2048'],
         ];
+
+        if ($this->user()?->hasAnyRole([User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN])) {
+            $rules['status'] = ['required', Rule::enum(CourseStatus::class)];
+        }
+
+        return $rules;
     }
 }

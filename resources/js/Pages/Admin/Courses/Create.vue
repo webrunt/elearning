@@ -6,6 +6,7 @@ const props = defineProps({
     statuses: { type: Object, required: true },
     instructors: { type: Array, required: true },
     can_pick_instructor: { type: Boolean, default: false },
+    is_admin: { type: Boolean, default: false },
 });
 
 const form = useForm({
@@ -70,7 +71,7 @@ export default {
                             </option>
                         </select>
                     </div>
-                    <div class="flex flex-col gap-1">
+                    <div v-if="is_admin" class="flex flex-col gap-1">
                         <label class="kt-form-label">Status</label>
                         <select v-model="form.status" class="kt-select" required>
                             <option v-for="(label, value) in statuses" :key="value" :value="value">

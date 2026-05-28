@@ -1,9 +1,9 @@
 ---
-description: Break large work into sub-tasks; suggest a commit message after each sub-task
+description: After each completed task, fix, or feature, suggest a ready-to-use git commit message
 alwaysApply: true
 ---
 
-# Workflow — chunking and commits
+# Workflow — chunking and commit messages
 
 ## Chunk large work
 
@@ -15,14 +15,23 @@ If a task is too big for one focused change set, split it into **sub-tasks** bef
 
 Do not start the next sub-task until the current one is finished and summarized for the user.
 
-## Commit message at end of each sub-task
+## Commit message after completed work
 
-When a sub-task is **done** (not when the full feature is done), end your reply with a **ready-to-use commit message** in a fenced block, for example:
+Whenever you finish a unit of work — a **sub-task**, **bug fix**, **new feature**, **refactor**, **docs update**, or any other coherent change — end your reply with a **ready-to-use commit message** in a fenced block:
 
 ```
-feat(auth): wire admin login POST and staff middleware
+feat(courses): add admin approval workflow for instructor submissions
 ```
 
-Use the repo’s existing commit style when known (e.g. `feat`, `fix`, `chore`). One sentence, imperative mood, scoped when helpful.
+### Format
 
-Do **not** run `git commit` unless the user explicitly asks you to commit.
+- Use conventional prefixes when they fit: `feat`, `fix`, `chore`, `docs`, `test`, `refactor`
+- Imperative mood, one concise line (optional second line for “why” if needed)
+- Scoped when helpful: `feat(courses):`, `fix(auth):`
+- Match the repo’s recent commit style when known
+
+### Do not commit automatically
+
+Do **not** run `git add` or `git commit` unless the user explicitly asks you to commit.
+
+If the session produced **multiple** separate units of work, suggest **one commit message per unit** (or note that changes should be split into separate commits).

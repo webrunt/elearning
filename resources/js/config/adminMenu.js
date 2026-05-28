@@ -15,6 +15,13 @@ export const adminMenuItems = [
         roles: ['instructor', 'admin', 'super_admin'],
     },
     {
+        title: 'Pending review',
+        icon: 'ki-time',
+        href: '/courses/pending',
+        roles: ['admin', 'super_admin'],
+        badgeKey: 'pending_review_count',
+    },
+    {
         title: 'Categories',
         icon: 'ki-category',
         href: '/categories',

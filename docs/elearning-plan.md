@@ -8,6 +8,7 @@
 
 - [x] **Phase 0:** Remove `MEMBER_DOMAIN` scaffold; Spatie roles; dual-portal session auth; permission-based admin sidebar
 - [x] **Phase 1:** Categories, courses, sections, lessons — admin/instructor CRUD with policies
+- [x] **Phase 1b:** Course approval workflow — instructor submit → admin review summary → approve/reject
 - [ ] **Phase 2:** Public catalog + course detail (store-client templates) + free enrollment + my learning
 - [ ] **Phase 3:** Video upload/streaming, lesson player, progress tracking, summaries, mini quizzes
 - [ ] **Phase 4:** Reviews, moderation queue, user/role management, notifications

@@ -18,7 +18,11 @@ const isActive = (href) => {
         return url === '/dashboard' || url === '/';
     }
 
-    return url === href;
+    if (href === '/courses') {
+        return url === '/courses' || url === '/courses/create';
+    }
+
+    return url === href || url.startsWith(href + '/');
 };
 </script>
 
@@ -79,8 +83,14 @@ const isActive = (href) => {
                             <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
                                 <i :class="['ki-filled text-lg', item.icon]" />
                             </span>
-                            <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+                            <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary grow">
                                 {{ item.title }}
+                            </span>
+                            <span
+                                v-if="item.badgeKey && (page.props.admin?.[item.badgeKey] ?? 0) > 0"
+                                class="kt-badge kt-badge-sm kt-badge-primary"
+                            >
+                                {{ page.props.admin[item.badgeKey] }}
                             </span>
                         </Link>
                     </div>

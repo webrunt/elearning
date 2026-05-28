@@ -2,6 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\CourseStatus;
+use App\Models\Course;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -40,10 +43,16 @@ class HandleInertiaRequests extends Middleware
         $adminScheme = $scheme !== null && $scheme !== '' ? $scheme : 'https';
         $adminLoginUrl = $adminHost !== '' ? $adminScheme.'://'.$adminHost.'/login' : '/';
 
+        $admin = [];
+        if ($user !== null && $user->hasAnyRole([User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN])) {
+            $admin['pending_review_count'] = Course::where('status', CourseStatus::PendingReview)->count();
+        }
+
         return array_merge($parent, [
             'auth' => [
                 'user' => $authUser,
             ],
+            'admin' => $admin,
             'urls' => [
                 'admin_login' => $adminLoginUrl,
             ],

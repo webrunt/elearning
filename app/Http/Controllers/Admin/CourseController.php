@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\UpdateCourseRequest;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\User;
+use App\Services\CourseReviewSummary;
 use App\Support\UniqueSlug;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,10 @@ use Inertia\Response;
 
 class CourseController extends Controller
 {
+    public function __construct(
+        protected CourseReviewSummary $reviewSummary
+    ) {}
+
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', Course::class);
@@ -77,7 +82,7 @@ class CourseController extends Controller
             'slug' => $slug,
             'title' => $request->string('title')->toString(),
             'summary' => $request->input('summary'),
-            'status' => $request->input('status'),
+            'status' => $this->resolveStatusForStore($request),
             'thumbnail_path' => $this->storeThumbnail($request),
         ]);
 
@@ -96,8 +101,15 @@ class CourseController extends Controller
             'sections.lessons' => fn ($query) => $query->orderBy('sort_order'),
         ]);
 
-        return Inertia::render('Admin/Courses/Edit', array_merge($this->formOptions($request), [
+        $options = $this->formOptions($request);
+        $isAdmin = $options['is_admin'];
+
+        return Inertia::render('Admin/Courses/Edit', array_merge($options, [
             'course' => $this->detailCourse($course),
+            'can_submit_for_review' => ! $isAdmin
+                && $course->status === CourseStatus::Draft
+                && $this->reviewSummary->canSubmitForReview($course),
+            'can_review' => $isAdmin && $course->isPendingReview(),
         ]));
     }
 
@@ -116,8 +128,11 @@ class CourseController extends Controller
             'slug' => $slug,
             'title' => $title,
             'summary' => $request->input('summary'),
-            'status' => $request->input('status'),
         ];
+
+        if ($request->user()->hasAnyRole([User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN])) {
+            $data['status'] = $request->input('status');
+        }
 
         $thumbnail = $this->storeThumbnail($request);
         if ($thumbnail !== null) {
@@ -153,7 +168,8 @@ class CourseController extends Controller
     protected function formOptions(Request $request): array
     {
         $user = $request->user();
-        $canPickInstructor = $user->hasAnyRole([User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN]);
+        $isAdmin = $user->hasAnyRole([User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN]);
+        $canPickInstructor = $isAdmin;
 
         $instructors = [];
         if ($canPickInstructor) {
@@ -171,10 +187,20 @@ class CourseController extends Controller
 
         return [
             'categories' => Category::orderBy('name')->get(['id', 'name']),
-            'statuses' => CourseStatus::labels(),
+            'statuses' => CourseStatus::labelsForStaff($isAdmin),
             'instructors' => $instructors,
             'can_pick_instructor' => $canPickInstructor,
+            'is_admin' => $isAdmin,
         ];
+    }
+
+    protected function resolveStatusForStore(Request $request): CourseStatus
+    {
+        if ($request->user()->hasAnyRole([User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN])) {
+            return CourseStatus::from($request->string('status')->toString());
+        }
+
+        return CourseStatus::Draft;
     }
 
     protected function resolveInstructorId(Request $request, ?Course $course = null): int
@@ -233,6 +259,10 @@ class CourseController extends Controller
             'slug' => $course->slug,
             'summary' => $course->summary,
             'status' => $course->status->value,
+            'status_label' => CourseStatus::labels()[$course->status->value] ?? $course->status->value,
+            'submitted_at' => $course->submitted_at?->toIso8601String(),
+            'review_summary' => $course->review_summary,
+            'rejection_feedback' => $course->rejection_feedback,
             'category_id' => $course->category_id,
             'instructor_id' => $course->instructor_id,
             'thumbnail_url' => $course->thumbnail_path

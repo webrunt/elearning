@@ -19,6 +19,11 @@ class Course extends Model
         'thumbnail_path',
         'status',
         'price',
+        'submitted_at',
+        'reviewed_at',
+        'reviewed_by',
+        'review_summary',
+        'rejection_feedback',
     ];
 
     /**
@@ -29,7 +34,19 @@ class Course extends Model
         return [
             'status' => CourseStatus::class,
             'price' => 'decimal:2',
+            'submitted_at' => 'datetime',
+            'reviewed_at' => 'datetime',
         ];
+    }
+
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function isPendingReview(): bool
+    {
+        return $this->status === CourseStatus::PendingReview;
     }
 
     public function instructor(): BelongsTo
