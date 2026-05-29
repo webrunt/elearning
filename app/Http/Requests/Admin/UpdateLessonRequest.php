@@ -15,6 +15,13 @@ class UpdateLessonRequest extends FormRequest
         return $lesson !== null && $this->user()?->can('update', $lesson) === true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('duration_seconds') === '' || $this->input('duration_seconds') === null) {
+            $this->merge(['duration_seconds' => null]);
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -29,7 +36,12 @@ class UpdateLessonRequest extends FormRequest
             'require_quiz_to_complete' => ['sometimes', 'boolean'],
             'quiz_pass_percent' => ['nullable', 'integer', 'min:1', 'max:100'],
             'is_preview' => ['sometimes', 'boolean'],
-            'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm', 'max:512000'],
+            'video' => [
+                'nullable',
+                'file',
+                'mimetypes:video/mp4,video/webm',
+                'max:'.config('media.lesson_video_max_kilobytes', 204800),
+            ],
             'quiz_questions' => ['nullable', 'array'],
             'quiz_questions.*.id' => ['nullable', 'integer'],
             'quiz_questions.*.prompt' => ['required_with:quiz_questions', 'string'],

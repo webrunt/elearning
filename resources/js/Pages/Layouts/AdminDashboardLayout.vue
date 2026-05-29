@@ -4,6 +4,7 @@ import ConfirmModal from '@/components/ConfirmModal.vue';
 import FlashGrowl from '@/components/FlashGrowl.vue';
 import AdminHeader from '@/components/Admin/HeaderDashboard.vue';
 import AdminFooter from '@/components/Admin/Footer.vue';
+import { cleanupMetronicModals } from '@/utils/metronicCleanup';
 import { onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 
@@ -13,16 +14,24 @@ onMounted(() => {
 
     // Initialize Metronic components when layout mounts
     const initMetronic = () => {
+        cleanupMetronicModals();
+
         if (typeof KTComponents !== 'undefined') {
             KTComponents.init();
         }
         if (typeof KTLayout !== 'undefined') {
             KTLayout.init();
         }
+
+        cleanupMetronicModals();
     };
 
     // Run on first load
     initMetronic();
+
+    router.on('finish', () => {
+        cleanupMetronicModals();
+    });
 
     // Re-initialize after every Inertia page navigation
     router.on('success', () => {

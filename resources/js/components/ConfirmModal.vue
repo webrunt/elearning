@@ -35,6 +35,7 @@ onUnmounted(() => {
     <Teleport to="body">
         <div
             v-if="modal.state.isOpen"
+            data-confirm-modal
             class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
             role="dialog"
             aria-modal="true"
@@ -45,43 +46,43 @@ onUnmounted(() => {
                 aria-hidden="true"
                 @click="modal.handleCancel"
             />
-            <div class="kt-modal open flex w-full max-w-[440px] relative z-10">
-                <div class="kt-modal-content w-full max-w-[440px] top-auto mx-auto shadow-xl">
-                    <div class="kt-modal-header">
-                        <h3 id="confirm-modal-title" class="kt-modal-title text-mono">
-                            {{ modal.state.title }}
-                        </h3>
-                        <button
-                            class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0"
-                            type="button"
-                            aria-label="Close"
-                            @click="modal.handleCancel"
-                        >
-                            <i class="ki-filled ki-cross" />
-                        </button>
-                    </div>
-                    <div class="kt-modal-body">
-                        <p class="text-sm text-secondary-foreground leading-relaxed">
-                            {{ modal.state.message }}
-                        </p>
-                    </div>
-                    <div class="kt-modal-footer flex justify-end gap-2.5 border-t border-border px-5 py-4">
-                        <button
-                            class="kt-btn kt-btn-outline"
-                            type="button"
-                            @click="modal.handleCancel"
-                        >
-                            {{ modal.state.cancelLabel }}
-                        </button>
-                        <button
-                            class="kt-btn"
-                            :class="modal.state.variant === 'danger' ? 'kt-btn-destructive' : 'kt-btn-primary'"
-                            type="button"
-                            @click="modal.handleConfirm"
-                        >
-                            {{ modal.state.confirmLabel }}
-                        </button>
-                    </div>
+            <div
+                class="relative z-10 w-full max-w-[440px] rounded-xl border border-border bg-background text-foreground shadow-xl overflow-hidden"
+            >
+                <div class="flex items-center justify-between gap-2 border-b border-border px-5 py-4">
+                    <h3 id="confirm-modal-title" class="text-base font-semibold text-mono">
+                        {{ modal.state.title }}
+                    </h3>
+                    <button
+                        class="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0"
+                        type="button"
+                        aria-label="Close"
+                        @click="modal.handleCancel"
+                    >
+                        <i class="ki-filled ki-cross" />
+                    </button>
+                </div>
+                <div class="px-5 py-4">
+                    <p class="text-sm text-secondary-foreground leading-relaxed">
+                        {{ modal.state.message }}
+                    </p>
+                </div>
+                <div class="flex justify-end gap-2.5 border-t border-border px-5 py-4">
+                    <button
+                        class="kt-btn kt-btn-outline"
+                        type="button"
+                        @click="modal.handleCancel"
+                    >
+                        {{ modal.state.cancelLabel }}
+                    </button>
+                    <button
+                        class="kt-btn"
+                        :class="modal.state.variant === 'danger' ? 'kt-btn-destructive' : 'kt-btn-primary'"
+                        type="button"
+                        @click="modal.handleConfirm"
+                    >
+                        {{ modal.state.confirmLabel }}
+                    </button>
                 </div>
             </div>
         </div>

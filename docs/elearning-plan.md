@@ -12,6 +12,8 @@
 - [x] **Phase 1c:** Admin UX — CKEditor for articles/summaries; clearer lesson creation flow on course edit
 - [x] **Phase 2:** Public catalog + course detail + free enrollment + my learning dashboard
 - [x] **Phase 3:** Lesson player, protected video, progress API, random mini quizzes, completion
+- [x] **Phase 3b:** PHP-FFMpeg — auto duration, video processing status, optional MP3 extract on upload
+- [ ] **Phase 3c:** Speech-to-text (Deepgram / Speechmatics) + optional summary draft
 - [ ] **Phase 4:** Reviews, moderation queue, user/role management, notifications
 - [ ] **Phase 5:** Stripe/checkout, orders, instructor payouts (when ready)
 
@@ -225,6 +227,18 @@ quiz_attempt_answers (quiz_attempt_id, quiz_question_id, quiz_option_id)
 - Progress API; random mini quiz; course completion
 
 **Deliverable:** Watch → summary → quiz → progress saved.
+
+### Phase 3b — Video processing (PHP-FFMpeg)
+
+- On video upload: queued `ProcessLessonVideo` — FFprobe duration, validate file, optional MP3 extract for STT
+- `video_processing_status` on lesson edit; auto-fill `duration_seconds` when complete
+- See [`docs/phase-3b-setup.md`](phase-3b-setup.md)
+
+**Deliverable:** Instructors upload once; duration and audio prep run in the background.
+
+### Phase 3c — Transcription (planned)
+
+- Deepgram / Speechmatics on extracted audio; optional summary draft into CKEditor
 
 ### Phase 4 — Trust and admin ops (2 weeks)
 

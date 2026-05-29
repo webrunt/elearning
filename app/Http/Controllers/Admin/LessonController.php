@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\LessonType;
+use App\Enums\VideoProcessingStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreLessonRequest;
 use App\Http\Requests\Admin\UpdateLessonRequest;
+use App\Jobs\ProcessLessonVideo;
 use App\Models\Lesson;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\Section;
+use App\Services\LessonVideoProcessor;
+use App\Support\PhpIniSize;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -52,6 +56,9 @@ class LessonController extends Controller
                 'summary' => $lesson->summary,
                 'content' => $lesson->content,
                 'duration_seconds' => $lesson->duration_seconds,
+                'video_processing_status' => $lesson->video_processing_status?->value,
+                'video_processing_error' => $lesson->video_processing_error,
+                'video_processed_at' => $lesson->video_processed_at?->toIso8601String(),
                 'require_quiz_to_complete' => $lesson->require_quiz_to_complete,
                 'quiz_pass_percent' => $lesson->quiz_pass_percent,
                 'is_preview' => $lesson->is_preview,
@@ -77,11 +84,20 @@ class LessonController extends Controller
                 'title' => $lesson->section->title,
             ],
             'lesson_types' => LessonType::labels(),
+            'upload_limits' => PhpIniSize::lessonVideoLimits(),
         ]);
     }
 
     public function update(UpdateLessonRequest $request, Lesson $lesson): RedirectResponse
     {
+        if ($request->hasFile('video')) {
+            $memoryLimit = config('media.lesson_video_memory_limit');
+
+            if (is_string($memoryLimit) && $memoryLimit !== '') {
+                ini_set('memory_limit', $memoryLimit);
+            }
+        }
+
         $lesson->loadMissing('section.course');
         $courseId = $lesson->section->course_id;
 
@@ -90,20 +106,36 @@ class LessonController extends Controller
             'type' => $request->input('type'),
             'summary' => $request->input('summary'),
             'content' => $request->input('content'),
-            'duration_seconds' => $request->input('duration_seconds'),
             'require_quiz_to_complete' => $request->boolean('require_quiz_to_complete'),
             'quiz_pass_percent' => (int) $request->input('quiz_pass_percent', 70),
             'is_preview' => $request->boolean('is_preview'),
         ];
+
+        $shouldProcessVideo = false;
 
         if ($request->hasFile('video')) {
             if ($lesson->video_path !== null && $lesson->video_disk !== null) {
                 Storage::disk($lesson->video_disk)->delete($lesson->video_path);
             }
 
+            app(LessonVideoProcessor::class)->deleteAudioFile($lesson);
+
             $path = $request->file('video')->store('courses/'.$courseId.'/videos', 'public');
             $data['video_path'] = $path;
             $data['video_disk'] = 'public';
+            $data['audio_path'] = null;
+            $data['audio_disk'] = null;
+            $data['video_processing_status'] = VideoProcessingStatus::Pending;
+            $data['video_processing_error'] = null;
+            $data['video_processed_at'] = null;
+            $shouldProcessVideo = true;
+        }
+
+        if (
+            ! $shouldProcessVideo
+            && $lesson->video_processing_status !== VideoProcessingStatus::Completed
+        ) {
+            $data['duration_seconds'] = $request->input('duration_seconds');
         }
 
         DB::transaction(function () use ($lesson, $data, $request) {
@@ -111,9 +143,17 @@ class LessonController extends Controller
             $this->syncQuizQuestions($lesson, $request->input('quiz_questions', []));
         });
 
+        if ($shouldProcessVideo) {
+            ProcessLessonVideo::dispatch($lesson->id);
+        }
+
+        $message = $shouldProcessVideo
+            ? 'Lesson saved. Video processing has started — duration will update when ready.'
+            : 'Lesson saved.';
+
         return redirect()
-            ->route('admin.courses.edit', $lesson->section->course_id)
-            ->with('success', 'Lesson saved.');
+            ->route('admin.lessons.edit', $lesson)
+            ->with('success', $message);
     }
 
     public function destroy(Lesson $lesson): RedirectResponse
@@ -126,6 +166,8 @@ class LessonController extends Controller
         if ($lesson->video_path !== null && $lesson->video_disk !== null) {
             Storage::disk($lesson->video_disk)->delete($lesson->video_path);
         }
+
+        app(LessonVideoProcessor::class)->deleteAudioFile($lesson);
 
         $lesson->delete();
 

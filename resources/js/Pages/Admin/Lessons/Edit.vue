@@ -1,16 +1,34 @@
 <script setup>
 import RichTextEditor from '@/components/Admin/RichTextEditor.vue';
 import { useConfirmModal } from '@/composables/useConfirmModal';
+import { useGrowl } from '@/composables/useGrowl';
+import { cleanupMetronicModals } from '@/utils/metronicCleanup';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const confirmModal = useConfirmModal();
+const growl = useGrowl();
+
+const maxVideoBytes = computed(() => {
+    const mb = props.upload_limits?.effective_max_mb || 200;
+
+    return Math.floor(mb * 1024 * 1024);
+});
 
 const props = defineProps({
     lesson: { type: Object, required: true },
     course: { type: Object, required: true },
     section: { type: Object, required: true },
     lesson_types: { type: Object, required: true },
+    upload_limits: {
+        type: Object,
+        default: () => ({
+            post_max_mb: 0,
+            upload_max_mb: 0,
+            app_max_mb: 200,
+            effective_max_mb: 200,
+        }),
+    },
 });
 
 const blankOption = (isCorrect) => ({ id: null, label: '', is_correct: isCorrect });
@@ -71,6 +89,47 @@ const durationMinutes = computed(() => {
     return Math.round(seconds / 60);
 });
 
+const videoProcessingStatus = computed(() => props.lesson.video_processing_status || null);
+
+const isVideoDurationAuto = computed(() => {
+    return form.type === 'video'
+        && props.lesson.video_url
+        && videoProcessingStatus.value === 'completed';
+});
+
+const videoProcessingLabel = computed(() => {
+    switch (videoProcessingStatus.value) {
+    case 'pending':
+        return 'Queued';
+    case 'processing':
+        return 'Processing video…';
+    case 'completed':
+        return 'Ready';
+    case 'failed':
+        return 'Processing failed';
+    case 'skipped':
+        return 'Auto-detect skipped (ffmpeg not available)';
+    default:
+        return null;
+    }
+});
+
+const videoProcessingBadgeClass = computed(() => {
+    switch (videoProcessingStatus.value) {
+    case 'pending':
+    case 'processing':
+        return 'kt-badge kt-badge-sm kt-badge-warning';
+    case 'completed':
+        return 'kt-badge kt-badge-sm kt-badge-success';
+    case 'failed':
+        return 'kt-badge kt-badge-sm kt-badge-destructive';
+    case 'skipped':
+        return 'kt-badge kt-badge-sm kt-badge-secondary';
+    default:
+        return 'kt-badge kt-badge-sm';
+    }
+});
+
 const onVideo = (event) => {
     const file = event.target.files[0];
     form.video = file || null;
@@ -122,8 +181,28 @@ const setCorrectOption = (questionIndex, optionIndex) => {
 };
 
 const submit = () => {
+    if (form.video && form.video.size > maxVideoBytes.value) {
+        const limitMb = props.upload_limits?.effective_max_mb || 200;
+        growl.error(
+            'Video is too large. PHP allows up to '
+            + limitMb
+            + ' MB on this server (post_max_size '
+            + (props.upload_limits?.post_max_mb || '?')
+            + ' MB). Compress the file or raise post_max_size in php.ini.',
+        );
+        cleanupMetronicModals();
+
+        return;
+    }
+
     form.put('/lessons/' + props.lesson.id, {
         forceFormData: true,
+        preserveScroll: true,
+        onError: () => {
+            cleanupMetronicModals();
+            growl.error('Could not save the lesson. Check the errors below and try again.');
+        },
+        onFinish: cleanupMetronicModals,
     });
 };
 </script>
@@ -150,19 +229,129 @@ export default {
                 {{ lesson.title }}
             </h1>
             <p class="text-sm text-muted-foreground mt-1">
-                Edit lesson content and optional end-of-lesson quiz.
+                <span v-if="form.type === 'video'">Upload your video first — duration is detected automatically, then set title and options below.</span>
+                <span v-else>Edit lesson content and optional end-of-lesson quiz.</span>
             </p>
         </div>
 
+        <div
+            v-if="Object.keys(form.errors).length > 0"
+            class="mb-6 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
+        >
+            <p class="font-medium mb-2">
+                Please fix the following before saving:
+            </p>
+            <ul class="list-disc ps-5 space-y-1">
+                <li v-for="(message, field) in form.errors" :key="field">
+                    {{ message }}
+                </li>
+            </ul>
+        </div>
+
         <form class="flex flex-col gap-6" @submit.prevent="submit">
-            <div class="kt-card">
+            <!-- Video lessons: upload first (order-1). Articles: content after details (order-2). -->
+            <div class="kt-card" :class="form.type === 'video' ? 'order-1' : 'order-2'">
                 <div class="kt-card-header px-5 py-4 border-b border-border">
                     <div>
                         <h3 class="kt-card-title text-sm font-semibold">
-                            Lesson details
+                            <span v-if="form.type === 'video'">Video & summary</span>
+                            <span v-else>Lesson content</span>
                         </h3>
                         <p class="text-xs text-muted-foreground mt-0.5">
-                            Title, type, and how this lesson appears in the course.
+                            <span v-if="form.type === 'video'">Upload your video first, then add a short summary for the course outline.</span>
+                            <span v-else>Write the article body and an optional summary.</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="kt-card-content p-5 lg:p-8 flex flex-col gap-4">
+                    <div v-if="form.type === 'video'" class="flex flex-col gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <label class="kt-form-label mb-0">Video file</label>
+                            <span
+                                v-if="videoProcessingLabel"
+                                :class="videoProcessingBadgeClass"
+                            >
+                                {{ videoProcessingLabel }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-muted-foreground -mt-1">
+                            MP4 or WebM, max {{ upload_limits.effective_max_mb }} MB on this server
+                            (PHP post_max_size {{ upload_limits.post_max_mb }} MB).
+                            Save the lesson after selecting a file so processing can start.
+                        </p>
+                        <p
+                            v-if="lesson.video_processing_error"
+                            class="text-xs text-destructive"
+                        >
+                            {{ lesson.video_processing_error }}
+                        </p>
+                        <video
+                            v-if="lesson.video_url && !form.video"
+                            :src="lesson.video_url"
+                            class="w-full max-h-64 rounded-lg bg-black"
+                            controls
+                        />
+                        <input class="kt-input" type="file" accept="video/mp4,video/webm" @change="onVideo" />
+                        <p v-if="form.video" class="text-xs text-primary">
+                            New file selected: {{ form.video.name }} — click Save lesson to upload and process.
+                        </p>
+                        <div class="flex flex-col gap-1 sm:max-w-xs">
+                            <label class="kt-form-label">Duration</label>
+                            <input
+                                v-if="!isVideoDurationAuto"
+                                v-model="form.duration_seconds"
+                                class="kt-input"
+                                type="number"
+                                min="0"
+                                placeholder="Auto-filled after save"
+                            />
+                            <p
+                                v-else
+                                class="kt-input bg-accent/30 text-mono py-2.5 px-3 rounded-md text-sm"
+                            >
+                                {{ lesson.duration_seconds || '—' }}
+                                <span class="text-muted-foreground font-normal"> (auto-detected)</span>
+                            </p>
+                            <p v-if="isVideoDurationAuto && durationMinutes" class="text-xs text-muted-foreground">
+                                ≈ {{ durationMinutes }} minutes — from uploaded video.
+                            </p>
+                            <p v-else-if="form.video || lesson.video_url" class="text-xs text-muted-foreground">
+                                Filled automatically after you save and processing completes.
+                            </p>
+                            <p v-else class="text-xs text-muted-foreground">
+                                Appears here after you upload a video and save.
+                            </p>
+                        </div>
+                    </div>
+                    <RichTextEditor
+                        v-model="form.summary"
+                        variant="minimal"
+                        label="Summary"
+                        hint="Short description shown in the course outline. Plain formatting only."
+                        placeholder="What will students learn in this lesson?"
+                    />
+                    <RichTextEditor
+                        v-if="form.type === 'article'"
+                        v-model="form.content"
+                        variant="full"
+                        label="Article body"
+                        hint="Main lesson content students read after opening the lesson."
+                        placeholder="Write your lesson here…"
+                        required
+                    />
+                </div>
+            </div>
+
+            <div class="kt-card" :class="form.type === 'video' ? 'order-2' : 'order-1'">
+                <div class="kt-card-header px-5 py-4 border-b border-border">
+                    <div>
+                        <h3 class="kt-card-title text-sm font-semibold">
+                            <span v-if="form.type === 'video'">Lesson settings</span>
+                            <span v-else>Lesson details</span>
+                        </h3>
+                        <p class="text-xs text-muted-foreground mt-0.5">
+                            <span v-if="form.type === 'video'">Title, type, and how this lesson appears in the course.</span>
+                            <span v-else>Title, type, and how this lesson appears in the course.</span>
                         </p>
                     </div>
                 </div>
@@ -180,9 +369,15 @@ export default {
                                 </option>
                             </select>
                         </div>
-                        <div class="flex flex-col gap-1">
+                        <div v-if="form.type !== 'video'" class="flex flex-col gap-1">
                             <label class="kt-form-label">Duration (seconds)</label>
-                            <input v-model="form.duration_seconds" class="kt-input" type="number" min="0" placeholder="e.g. 600" />
+                            <input
+                                v-model="form.duration_seconds"
+                                class="kt-input"
+                                type="number"
+                                min="0"
+                                placeholder="e.g. 600"
+                            />
                             <p v-if="durationMinutes" class="text-xs text-muted-foreground">
                                 ≈ {{ durationMinutes }} minutes — used for progress display.
                             </p>
@@ -205,55 +400,7 @@ export default {
                 </div>
             </div>
 
-            <div class="kt-card">
-                <div class="kt-card-header px-5 py-4 border-b border-border">
-                    <div>
-                        <h3 class="kt-card-title text-sm font-semibold">
-                            Lesson content
-                        </h3>
-                        <p class="text-xs text-muted-foreground mt-0.5">
-                            <span v-if="form.type === 'video'">Upload the video and add a short summary.</span>
-                            <span v-else>Write the article body and an optional summary.</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="kt-card-content p-5 lg:p-8 flex flex-col gap-4">
-                    <RichTextEditor
-                        v-model="form.summary"
-                        variant="minimal"
-                        label="Summary"
-                        hint="Short description shown in the course outline. Plain formatting only."
-                        placeholder="What will students learn in this lesson?"
-                    />
-                    <RichTextEditor
-                        v-if="form.type === 'article'"
-                        v-model="form.content"
-                        variant="full"
-                        label="Article body"
-                        hint="Main lesson content students read after opening the lesson."
-                        placeholder="Write your lesson here…"
-                        required
-                    />
-                    <div v-if="form.type === 'video'" class="flex flex-col gap-2">
-                        <label class="kt-form-label">Video file</label>
-                        <p class="text-xs text-muted-foreground -mt-1">
-                            MP4 or WebM. Replace the file below to update the video.
-                        </p>
-                        <video
-                            v-if="lesson.video_url && !form.video"
-                            :src="lesson.video_url"
-                            class="w-full max-h-64 rounded-lg bg-black"
-                            controls
-                        />
-                        <input class="kt-input" type="file" accept="video/mp4,video/webm" @change="onVideo" />
-                        <p v-if="form.video" class="text-xs text-primary">
-                            New file selected: {{ form.video.name }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="kt-card">
+            <div class="kt-card order-3">
                 <div class="kt-card-header px-5 py-4 border-b border-border flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <h3 class="kt-card-title text-sm font-semibold">
@@ -463,9 +610,12 @@ export default {
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-3 sticky bottom-0 py-4 bg-background/95 border-t border-border -mx-1 px-1">
+            <div
+                class="order-4 sticky bottom-0 z-30 -mx-1 mt-2 flex flex-wrap gap-3 border-t border-border bg-background/95 px-1 py-4 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)] backdrop-blur-sm supports-[backdrop-filter]:bg-background/80"
+            >
                 <button class="kt-btn kt-btn-primary" type="submit" :disabled="form.processing">
-                    Save lesson
+                    <span v-if="form.processing">Saving…</span>
+                    <span v-else>Save lesson</span>
                 </button>
                 <Link :href="'/courses/' + course.id + '/edit'" class="kt-btn kt-btn-outline">
                     Cancel

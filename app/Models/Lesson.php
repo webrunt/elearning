@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LessonType;
+use App\Enums\VideoProcessingStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +18,11 @@ class Lesson extends Model
         'content',
         'video_path',
         'video_disk',
+        'video_processing_status',
+        'video_processing_error',
+        'video_processed_at',
+        'audio_path',
+        'audio_disk',
         'duration_seconds',
         'require_quiz_to_complete',
         'quiz_pass_percent',
@@ -31,6 +37,8 @@ class Lesson extends Model
     {
         return [
             'type' => LessonType::class,
+            'video_processing_status' => VideoProcessingStatus::class,
+            'video_processed_at' => 'datetime',
             'require_quiz_to_complete' => 'boolean',
             'is_preview' => 'boolean',
             'quiz_pass_percent' => 'integer',
