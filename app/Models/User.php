@@ -58,6 +58,16 @@ class User extends Authenticatable
         return $this->hasMany(Enrollment::class);
     }
 
+    public function courseReviews(): HasMany
+    {
+        return $this->hasMany(CourseReview::class);
+    }
+
+    public static function admins(): \Illuminate\Database\Eloquent\Builder
+    {
+        return static::role([self::ROLE_ADMIN, self::ROLE_SUPER_ADMIN]);
+    }
+
     public function isEnrolledIn(Course $course): bool
     {
         return $this->enrollments()

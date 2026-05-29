@@ -5,6 +5,7 @@ use App\Http\Controllers\Student\Auth\LoginController as StudentLoginController;
 use App\Http\Controllers\Student\Auth\LogoutController as StudentLogoutController;
 use App\Http\Controllers\Student\Auth\RegisterController as StudentRegisterController;
 use App\Http\Controllers\Student\CatalogController;
+use App\Http\Controllers\Student\CourseReviewController;
 use App\Http\Controllers\Student\EnrollmentController;
 use App\Http\Controllers\Student\LearnController;
 use App\Http\Controllers\Student\LessonProgressController;
@@ -32,6 +33,7 @@ Route::middleware(['auth', 'student'])->group(function () {
     Route::post('/logout', StudentLogoutController::class)->name('student.logout');
     Route::get('/my-learning', [MyLearningController::class, 'index'])->name('my-learning.index');
     Route::post('/courses/{slug}/enroll', [EnrollmentController::class, 'store'])->name('enrollments.store');
+    Route::post('/courses/{slug}/reviews', [CourseReviewController::class, 'store'])->name('course-reviews.store');
     Route::get('/learn/courses/{slug}/continue', [LearnController::class, 'continue'])->name('learn.continue');
     Route::patch('/learn/lessons/{lesson}/progress', [LessonProgressController::class, 'update'])->name('learn.lessons.progress');
     Route::get('/learn/lessons/{lesson}/quiz', [LessonQuizController::class, 'show'])->name('learn.lessons.quiz');

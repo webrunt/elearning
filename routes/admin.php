@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\CourseReviewController;
 use App\Http\Controllers\Admin\LessonController;
+use App\Http\Controllers\Admin\ReviewModerationController;
 use App\Http\Controllers\Admin\SectionController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest.staff')->group(function () {
@@ -26,6 +28,13 @@ Route::middleware(['auth', 'staff'])->name('admin.')->group(function () {
     Route::post('courses/{course}/submit-review', [CourseReviewController::class, 'submit'])->name('courses.review.submit');
     Route::post('courses/{course}/approve', [CourseReviewController::class, 'approve'])->name('courses.review.approve');
     Route::post('courses/{course}/reject', [CourseReviewController::class, 'reject'])->name('courses.review.reject');
+
+    Route::get('reviews/pending', [ReviewModerationController::class, 'index'])->name('reviews.moderation.index');
+    Route::post('reviews/{review}/approve', [ReviewModerationController::class, 'approve'])->name('reviews.moderation.approve');
+    Route::post('reviews/{review}/reject', [ReviewModerationController::class, 'reject'])->name('reviews.moderation.reject');
+
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::patch('users/{user}', [UserController::class, 'update'])->name('users.update');
 
     Route::resource('courses', CourseController::class)->except(['show']);
 

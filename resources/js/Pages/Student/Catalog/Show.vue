@@ -1,6 +1,6 @@
 <script setup>
 import HtmlContent from '@/components/Admin/HtmlContent.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import PublicLayout from '@/Pages/Layouts/PublicLayout.vue';
 import { computed } from 'vue';
 
@@ -10,6 +10,10 @@ const props = defineProps({
     can_enroll: { type: Boolean, default: false },
     login_required: { type: Boolean, default: false },
     continue_url: { type: String, default: null },
+    can_submit_review: { type: Boolean, default: false },
+    my_review: { type: Object, default: null },
+    reviews_summary: { type: Object, required: true },
+    reviews: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -27,6 +31,33 @@ const totalLessons = computed(() => {
 
 const enroll = () => {
     router.post('/courses/' + props.course.slug + '/enroll');
+};
+
+const reviewForm = useForm({
+    rating: props.my_review?.rating ?? 5,
+    body: props.my_review?.body ?? '',
+});
+
+const submitReview = () => {
+    reviewForm.post('/courses/' + props.course.slug + '/reviews', {
+        preserveScroll: true,
+    });
+};
+
+const reviewStatusLabel = (status) => {
+    if (status === 'pending') {
+        return 'Pending moderation';
+    }
+
+    if (status === 'approved') {
+        return 'Published';
+    }
+
+    if (status === 'rejected') {
+        return 'Not published';
+    }
+
+    return status;
 };
 
 const lessonTypeLabel = (type) => {
@@ -82,6 +113,71 @@ export default {
                     </div>
                     <div class="kt-card-content p-5">
                         <HtmlContent :html="course.summary" empty-text="No description yet." />
+                    </div>
+                </div>
+
+                <div class="kt-card">
+                    <div class="kt-card-header px-5 py-4 border-b border-border">
+                        <h2 class="text-sm font-semibold">
+                            Reviews
+                        </h2>
+                        <p v-if="reviews_summary.count > 0" class="text-xs text-muted-foreground mt-1">
+                            {{ reviews_summary.average_rating }} average · {{ reviews_summary.count }} review{{ reviews_summary.count === 1 ? '' : 's' }}
+                        </p>
+                        <p v-else class="text-xs text-muted-foreground mt-1">
+                            No published reviews yet.
+                        </p>
+                    </div>
+                    <div class="kt-card-content p-5 flex flex-col gap-4">
+                        <div
+                            v-for="(review, index) in reviews"
+                            :key="index"
+                            class="border border-border rounded-xl p-4"
+                        >
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="font-medium text-sm">{{ review.user_name }}</span>
+                                <span class="text-xs text-muted-foreground">{{ review.rating }} / 5</span>
+                            </div>
+                            <p v-if="review.body" class="text-sm whitespace-pre-wrap">
+                                {{ review.body }}
+                            </p>
+                        </div>
+
+                        <div v-if="can_submit_review" class="border border-border rounded-xl p-4 flex flex-col gap-3">
+                            <h3 class="text-sm font-semibold">
+                                {{ my_review ? 'Update your review' : 'Leave a review' }}
+                            </h3>
+                            <p v-if="my_review" class="text-xs text-muted-foreground">
+                                Status: {{ reviewStatusLabel(my_review.status) }}
+                                <span v-if="my_review.moderation_note"> — {{ my_review.moderation_note }}</span>
+                            </p>
+                            <label class="text-sm">
+                                Rating
+                                <select v-model="reviewForm.rating" class="kt-input mt-1 w-full">
+                                    <option v-for="n in 5" :key="n" :value="n">
+                                        {{ n }} star{{ n === 1 ? '' : 's' }}
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="text-sm">
+                                Comment (optional)
+                                <textarea
+                                    v-model="reviewForm.body"
+                                    class="kt-input mt-1 min-h-24 w-full"
+                                    rows="4"
+                                    maxlength="5000"
+                                    placeholder="What did you think of this course?"
+                                />
+                            </label>
+                            <button
+                                type="button"
+                                class="kt-btn kt-btn-primary w-fit"
+                                :disabled="reviewForm.processing"
+                                @click="submitReview"
+                            >
+                                Submit review
+                            </button>
+                        </div>
                     </div>
                 </div>
 

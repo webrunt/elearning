@@ -75,6 +75,16 @@ class Course extends Model
         return $this->hasMany(Enrollment::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(CourseReview::class);
+    }
+
+    public function approvedReviews(): HasMany
+    {
+        return $this->reviews()->where('status', \App\Enums\CourseReviewStatus::Approved);
+    }
+
     /**
      * @param  Builder<Course>  $query
      * @return Builder<Course>

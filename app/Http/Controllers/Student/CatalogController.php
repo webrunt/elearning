@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -93,6 +94,9 @@ class CatalogController extends Controller
         $enrollment = null;
         $progressPercent = 0;
 
+        $myReview = null;
+        $canSubmitReview = false;
+
         if ($user !== null && $user->isStudent()) {
             $enrollment = Enrollment::where('user_id', $user->id)
                 ->where('course_id', $course->id)
@@ -100,8 +104,39 @@ class CatalogController extends Controller
 
             if ($enrollment !== null) {
                 $progressPercent = app(\App\Services\EnrollmentProgress::class)->percent($enrollment);
+                $canSubmitReview = true;
+
+                $existingReview = CourseReview::query()
+                    ->where('course_id', $course->id)
+                    ->where('user_id', $user->id)
+                    ->first();
+
+                if ($existingReview !== null) {
+                    $myReview = [
+                        'rating' => $existingReview->rating,
+                        'body' => $existingReview->body,
+                        'status' => $existingReview->status->value,
+                        'moderation_note' => $existingReview->moderation_note,
+                    ];
+                }
             }
         }
+
+        $reviewStats = $course->approvedReviews()
+            ->selectRaw('AVG(rating) as average_rating, COUNT(*) as count')
+            ->first();
+
+        $approvedReviews = $course->approvedReviews()
+            ->with('user:id,name')
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(fn (CourseReview $review) => [
+                'rating' => $review->rating,
+                'body' => $review->body,
+                'created_at' => $review->created_at?->toIso8601String(),
+                'user_name' => $review->user->name,
+            ]);
 
         return Inertia::render('Student/Catalog/Show', [
             'course' => array_merge($this->catalogCourse($course, $user), [
@@ -128,6 +163,15 @@ class CatalogController extends Controller
                 && $enrollment === null
                 && $course->isFree(),
             'login_required' => $user === null,
+            'can_submit_review' => $canSubmitReview,
+            'my_review' => $myReview,
+            'reviews_summary' => [
+                'average_rating' => $reviewStats->average_rating !== null
+                    ? round((float) $reviewStats->average_rating, 1)
+                    : null,
+                'count' => (int) ($reviewStats->count ?? 0),
+            ],
+            'reviews' => $approvedReviews,
         ]);
     }
 }

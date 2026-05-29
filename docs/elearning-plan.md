@@ -13,8 +13,8 @@
 - [x] **Phase 2:** Public catalog + course detail + free enrollment + my learning dashboard
 - [x] **Phase 3:** Lesson player, protected video, progress API, random mini quizzes, completion
 - [x] **Phase 3b:** PHP-FFMpeg — auto duration, video processing status, optional MP3 extract on upload
-- [ ] **Phase 3c:** Speech-to-text (Deepgram / Speechmatics) + optional summary draft
-- [ ] **Phase 4:** Reviews, moderation queue, user/role management, notifications
+- [ ] **Phase 3c:** Speech-to-text (Deepgram / Speechmatics) + optional summary draft — *deferred*
+- [x] **Phase 4:** Reviews, moderation queue, user/role management, notifications
 - [ ] **Phase 5:** Stripe/checkout, orders, instructor payouts (when ready)
 
 ---
@@ -236,13 +236,16 @@ quiz_attempt_answers (quiz_attempt_id, quiz_question_id, quiz_option_id)
 
 **Deliverable:** Instructors upload once; duration and audio prep run in the background.
 
-### Phase 3c — Transcription (planned)
+### Phase 3c — Transcription (deferred)
 
 - Deepgram / Speechmatics on extracted audio; optional summary draft into CKEditor
+- Skipped for now; see Phase 3b MP3 extract when ready
 
-### Phase 4 — Trust and admin ops (2 weeks)
+### Phase 4 — Trust and admin ops
 
-- Reviews, moderation queue, user management, email notifications
+- Student course reviews on catalog detail; admin moderation queue
+- User list + role management; email notifications for course and review workflows
+- See [`docs/phase-4-setup.md`](phase-4-setup.md)
 
 ### Phase 5 — Monetization (when ready)
 

@@ -22,6 +22,13 @@ export const adminMenuItems = [
         badgeKey: 'pending_review_count',
     },
     {
+        title: 'Review moderation',
+        icon: 'ki-star',
+        href: '/reviews/pending',
+        roles: ['admin', 'super_admin'],
+        badgeKey: 'pending_course_reviews_count',
+    },
+    {
         title: 'Categories',
         icon: 'ki-category',
         href: '/categories',
@@ -30,7 +37,7 @@ export const adminMenuItems = [
     {
         title: 'Users',
         icon: 'ki-profile-circle',
-        href: '/dashboard',
+        href: '/users',
         roles: ['admin', 'super_admin'],
     },
     {

@@ -7,6 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApproveCourseRequest;
 use App\Http\Requests\Admin\RejectCourseRequest;
 use App\Models\Course;
+use App\Notifications\CourseApprovedNotification;
+use App\Notifications\CourseRejectedNotification;
+use App\Notifications\CourseSubmittedForReviewNotification;
+use App\Services\AdminNotifier;
 use App\Services\CourseReviewSummary;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,6 +84,8 @@ class CourseReviewController extends Controller
             'rejection_feedback' => null,
         ]);
 
+        app(AdminNotifier::class)->notify(new CourseSubmittedForReviewNotification($course));
+
         return back()->with('success', 'Course submitted for admin review.');
     }
 
@@ -92,6 +98,11 @@ class CourseReviewController extends Controller
             'review_summary' => $request->string('review_summary')->toString(),
             'rejection_feedback' => null,
         ]);
+
+        $course->load('instructor');
+        if ($course->instructor !== null) {
+            $course->instructor->notify(new CourseApprovedNotification($course));
+        }
 
         return redirect()
             ->route('admin.courses.review.pending')
@@ -107,6 +118,11 @@ class CourseReviewController extends Controller
             'review_summary' => $request->input('review_summary'),
             'rejection_feedback' => $request->string('rejection_feedback')->toString(),
         ]);
+
+        $course->load('instructor');
+        if ($course->instructor !== null) {
+            $course->instructor->notify(new CourseRejectedNotification($course));
+        }
 
         return redirect()
             ->route('admin.courses.review.pending')
